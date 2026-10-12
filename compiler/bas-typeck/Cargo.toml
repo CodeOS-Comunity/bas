@@ -1,0 +1,10 @@
+[package]
+name = "bas-typeck"
+version = "0.1.0"
+edition = "2021"
+description = "Type checking for the bas language"
+license = "MIT"
+
+[dependencies]
+bas-frontend = { path = "../bas-frontend" }
+bas-hir = { path = "../bas-hir" }

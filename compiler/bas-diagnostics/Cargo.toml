@@ -1,0 +1,8 @@
+[package]
+name = "bas-diagnostics"
+version = "0.1.0"
+edition = "2021"
+description = "bas-diagnostics for the bas language"
+license = "MIT"
+
+[dependencies]

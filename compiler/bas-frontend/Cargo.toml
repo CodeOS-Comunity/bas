@@ -1,0 +1,10 @@
+[package]
+name = "bas-frontend"
+version = "0.1.0"
+edition = "2021"
+description = "Lexer, parser, and AST for the bas language"
+license = "MIT"
+
+[dependencies]
+
+[dev-dependencies]

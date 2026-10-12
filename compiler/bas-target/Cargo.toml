@@ -1,0 +1,8 @@
+[package]
+name = "bas-target"
+version = "0.1.0"
+edition = "2021"
+description = "bas-target for the bas language"
+license = "MIT"
+
+[dependencies]

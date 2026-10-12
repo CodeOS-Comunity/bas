@@ -1,0 +1,8 @@
+[package]
+name = "bas-symbol"
+version = "0.1.0"
+edition = "2021"
+description = "bas-symbol for the bas language"
+license = "MIT"
+
+[dependencies]

@@ -1,0 +1,8 @@
+[package]
+name = "bas-session"
+version = "0.1.0"
+edition = "2021"
+description = "bas-session for the bas language"
+license = "MIT"
+
+[dependencies]

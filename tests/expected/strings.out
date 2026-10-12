@@ -1,0 +1,9 @@
+Hello, bas!
+length = 11
+empty  = false
+has 'bas' = true
+starts with 'Hello' = true
+ends with '!' = true
+copy = Hello, bas!
+numbers = 3 items
+total weight = 2

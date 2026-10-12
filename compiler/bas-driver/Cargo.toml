@@ -1,0 +1,12 @@
+[package]
+name = "bas-driver"
+version = "0.1.0"
+edition = "2021"
+description = "Compiler driver for the bas language"
+license = "MIT"
+
+[dependencies]
+bas-frontend = { path = "../bas-frontend" }
+bas-borrowck = { path = "../bas-borrowck" }
+bas-codegen = { path = "../bas-codegen" }
+bas-typeck = { path = "../bas-typeck" }

@@ -1,0 +1,9 @@
+[package]
+name = "bas-codegen"
+version = "0.1.0"
+edition = "2021"
+description = "C code generator for the bas language"
+license = "MIT"
+
+[dependencies]
+bas-frontend = { path = "../bas-frontend" }

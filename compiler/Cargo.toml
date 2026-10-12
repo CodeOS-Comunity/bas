@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = [
+    "bas-frontend",
+    "bas-hir",
+    "bas-mir",
+    "bas-typeck",
+    "bas-borrowck",
+    "bas-codegen",
+    "bas-driver",
+    "bas-diagnostics",
+    "bas-symbol",
+    "bas-session",
+    "bas-target",
+    "bas-cli",
+]
+exclude = ["bas-stdlib"]
+
+[workspace.dependencies]
+# Core
+thiserror = "1.0"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.5"
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Compiler internals
+log = "0.4"
+
+# Data structures
+smallvec = "1.10"
+indexmap = "2.0"
+bitflags = "2.4"
+slotmap = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = "thin"

@@ -1,0 +1,6 @@
+max(3, 7) = 7
+max(2.5, 1.5) = 2.5
+identity(42) = 42
+identity("hi") = hi
+first = 10
+first_of_two = 9

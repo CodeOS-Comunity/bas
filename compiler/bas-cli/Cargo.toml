@@ -1,0 +1,13 @@
+[package]
+name = "bas-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Command-line interface for the bas compiler"
+license = "MIT"
+
+[[bin]]
+name = "bas"
+path = "src/main.rs"
+
+[dependencies]
+bas-driver = { path = "../bas-driver" }

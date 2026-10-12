@@ -1,0 +1,8 @@
+[package]
+name = "bas-mir"
+version = "0.1.0"
+edition = "2021"
+description = "bas-mir for the bas language"
+license = "MIT"
+
+[dependencies]

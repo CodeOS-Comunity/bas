@@ -1,0 +1,9 @@
+[package]
+name = "bas-borrowck"
+version = "0.1.0"
+edition = "2021"
+description = "Ownership and move checking for the bas language"
+license = "MIT"
+
+[dependencies]
+bas-frontend = { path = "../bas-frontend" }

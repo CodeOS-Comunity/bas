@@ -1,0 +1,37 @@
+// Growable strings and heap collections.
+//
+// `String` is move-only (see `tests/errors/`), backed by a growable C buffer.
+// `Vec<T>` supports `new`/`with_capacity` with an explicit element type.
+
+fn greet(name: &str) -> String {
+    let mut s = String::new();
+    s.push_str("Hello, ");
+    s.push_str(name);
+    s.push('!');
+    s
+}
+
+fn main() {
+    let msg = greet("bas");
+    println!("{}", msg);
+    println!("length = {}", msg.len());
+    println!("empty  = {}", msg.is_empty());
+    println!("has 'bas' = {}", msg.contains("bas"));
+    println!("starts with 'Hello' = {}", msg.starts_with("Hello"));
+    println!("ends with '!' = {}", msg.ends_with("!"));
+
+    let copy = msg.clone();
+    println!("copy = {}", copy);
+
+    let mut numbers: Vec<i32> = Vec::new();
+    numbers.push(10);
+    numbers.push(20);
+    numbers.push(30);
+    println!("numbers = {} items", numbers.len());
+
+    let mut weights: Vec<f64> = Vec::with_capacity(2);
+    weights.push(0.5);
+    weights.push(1.5);
+    let total = weights[0] + weights[1];
+    println!("total weight = {}", total);
+}

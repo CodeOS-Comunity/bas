@@ -1,0 +1,4 @@
+p.x = 1.5, p.y = 2.5
+p.sum() = 4
+after scaling: (3, 5)
+sum = 8
