@@ -56,7 +56,7 @@ COMMANDS:
   indexing, `if` expressions, blocks, `match`.
 - **Sum types + pattern matching**: enums with unit/tuple variants, lowered to
   tagged unions; `match` lowered to an if/else chain with bindings, wildcards,
-  literals, ranges, or-patterns, and enum destructuring.
+  literals, range patterns, or-patterns, and enum destructuring.
 - **Structs + methods**: `impl` blocks, `&self` / `&mut self` / `self`
   receivers, associated functions (`Type::new`).
 - **Macros**: `println!`, `print!`, `format!`, `panic!`, `assert!`,
