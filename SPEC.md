@@ -32,7 +32,7 @@
 ### 3.1 Hello World
 
 ```bas
-// bas source file: hello.bas
+// bas source file: hello.ba
 import std.io;
 
 fn main() -> i32 {
@@ -354,7 +354,7 @@ let result = loop {
 ### 3.12 Modules & Visibility
 
 ```bas
-// File: math/geometry.bas
+// File: math/geometry.ba
 mod geometry {
     pub struct Point { pub x: f64, pub y: f64 }
     
@@ -367,7 +367,7 @@ mod geometry {
     pub use self::Point as Pt;
 }
 
-// File: main.bas
+// File: main.ba
 import math::geometry::{Point, distance};
 import std::collections::HashMap;
 
@@ -478,14 +478,14 @@ std/
 my_project/
 ├── bas.toml              # Project manifest
 ├── src/
-│   ├── main.bas          # Binary entry point
-│   └── lib.bas           # Library root
+│   ├── main.ba          # Binary entry point
+│   └── lib.ba           # Library root
 ├── tests/
-│   └── integration.bas
+│   └── integration.ba
 ├── benches/
-│   └── bench.bas
+│   └── bench.ba
 └── examples/
-    └── example.bas
+    └── example.ba
 ```
 
 ### 5.2 bas.toml
@@ -578,7 +578,7 @@ bas-compiler/
 ### Pipeline
 
 ```
-Source (.bas)
+Source (.ba)
     │
     ▼
 Lexer ──────► Tokens
@@ -726,7 +726,7 @@ pub extern "C" fn bas_add(a: i32, b: i32) -> i32 {
 ## 13. Example: Complete Program
 
 ```bas
-// File: wc.bas - Word count utility
+// File: wc.ba - Word count utility
 import std.io;
 import std.fs;
 import std.str;

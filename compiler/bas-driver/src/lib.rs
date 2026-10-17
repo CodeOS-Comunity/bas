@@ -133,7 +133,7 @@ pub fn build(input: &Path, output: &Path) -> DriverResult<()> {
 
     // Keep the generated C for debugging if the build failed.
     if result.is_err() {
-        let debug_path = output.with_extension("bas.c");
+        let debug_path = output.with_extension("ba.c");
         let _ = std::fs::write(&debug_path, &c_src);
     } else {
         let _ = std::fs::remove_file(&c_path);

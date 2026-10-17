@@ -18,17 +18,17 @@ cd compiler
 cargo build
 
 # run a program
-cargo run -p bas-cli -- run ../examples/hello.bas
+cargo run -p bas-cli -- run ../examples/hello.ba
 
 # build a native executable
-cargo run -p bas-cli -- build ../examples/enums.bas -o /tmp/enums
+cargo run -p bas-cli -- build ../examples/enums.ba -o /tmp/enums
 /tmp/enums
 
 # just check it parses / lowers
-cargo run -p bas-cli -- check ../examples/structs.bas
+cargo run -p bas-cli -- check ../examples/structs.ba
 
 # inspect the generated C
-cargo run -p bas-cli -- emit-c ../examples/hello.bas
+cargo run -p bas-cli -- emit-c ../examples/hello.ba
 ```
 
 The `bas` binary is also produced at `compiler/target/debug/bas`.
@@ -56,7 +56,7 @@ COMMANDS:
   indexing, `if` expressions, blocks, `match`.
 - **Sum types + pattern matching**: enums with unit/tuple variants, lowered to
   tagged unions; `match` lowered to an if/else chain with bindings, wildcards,
-  literals, ranges, or-patterns, and enum destructuring.
+  literals, range patterns, or-patterns, and enum destructuring.
 - **Structs + methods**: `impl` blocks, `&self` / `&mut self` / `self`
   receivers, associated functions (`Type::new`).
 - **Macros**: `println!`, `print!`, `format!`, `panic!`, `assert!`,
@@ -177,7 +177,7 @@ bas/
 ## Pipeline
 
 ```
-source.bas
+source.ba
    │  bas-frontend::lex + parse
    ▼
 SourceFile (AST)
@@ -208,7 +208,7 @@ cargo test            # unit tests (frontend + codegen + borrowck + typeck)
 
 cd ..
 ./tests/run.sh        # run every example and compare output;
-                      # also rejects tests/errors/*.bas with a matching diagnostic
+                      # also rejects tests/errors/*.ba with a matching diagnostic
 ```
 
 ## Roadmap

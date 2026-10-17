@@ -18,8 +18,8 @@ cargo build --manifest-path "$COMPILER/Cargo.toml" -p bas-cli --quiet
 
 fail=0
 count=0
-for src in "$ROOT"/examples/*.bas; do
-    name="$(basename "$src" .bas)"
+for src in "$ROOT"/examples/*.ba; do
+    name="$(basename "$src" .ba)"
     exp="$EXPECTED/$name.out"
     if [[ ! -f "$exp" ]]; then
         echo "SKIP $name (no expected output at tests/expected/$name.out)"
@@ -40,9 +40,9 @@ rm -f /tmp/bas_stderr_$$
 
 # Negative tests: programs that must be rejected with a matching diagnostic.
 ERRDIR="$ROOT/tests/errors"
-if compgen -G "$ERRDIR/*.bas" > /dev/null; then
-    for src in "$ERRDIR"/*.bas; do
-        name="$(basename "$src" .bas)"
+if compgen -G "$ERRDIR/*.ba" > /dev/null; then
+    for src in "$ERRDIR"/*.ba; do
+        name="$(basename "$src" .ba)"
         exp="$ERRDIR/$name.err"
         count=$((count + 1))
         stderr="$("$BAS" check "$src" 2>&1 >/dev/null || true)"
