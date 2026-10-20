@@ -984,6 +984,30 @@ impl Codegen {
                 }
                 Ok(())
             }
+            Item::ExternBlock { items, .. } => {
+                // Emit the C prototypes.  An extern block declares a function
+                // for typechecking, but nothing put a declaration in the
+                // generated C, so the call reached the C compiler as an implicit
+                // declaration -- which C99 rejects outright.  Every FFI depends
+                // on this: the OS SDK in pkgs/core/bas/sdk is exactly such a set
+                // of extern blocks.
+                for inner in items {
+                    if let Item::Fn(f) = inner {
+                        let sig = self.resolve_fn_sig(f, None)?;
+                        let params: Vec<String> =
+                            sig.params.iter().map(|p| p.c_name()).collect();
+                        writeln!(
+                            self.protos,
+                            "extern {} {}({});",
+                            sig.ret.c_name(),
+                            f.name.0,
+                            params.join(", ")
+                        )
+                        .unwrap();
+                    }
+                }
+                Ok(())
+            }
             Item::Const { name, ty, value } => {
                 let cty = self.resolve_type(ty)?;
                 let v = self.emit_expr(value)?;
@@ -1825,6 +1849,29 @@ impl Codegen {
             Expr::Binary { op, left, right } => {
                 let l = self.emit_expr(left)?;
                 let r = self.emit_expr(right)?;
+                // `&str` and `String` both lower to `const char *`, so the C
+                // spelling of `==` compares addresses.  bas has no syntax for
+                // pointer identity -- a string comparison can only mean the
+                // Rust content comparison -- so route the relational operators
+                // through the NULL-safe helpers in the runtime.  This is not
+                // academic: selftest.ba's `got == payload` was silently false
+                // on every boot because the read buffer and the literal had
+                // different addresses.
+                let lt = self.infer_expr_type(left)?;
+                let rt = self.infer_expr_type(right)?;
+                let string_operand = matches!(lt, CType::Str | CType::String)
+                    || matches!(rt, CType::Str | CType::String);
+                if string_operand {
+                    match op {
+                        BinOp::Eq => return Ok(format!("bas_str_eq({}, {})", l, r)),
+                        BinOp::Ne => return Ok(format!("(!bas_str_eq({}, {}))", l, r)),
+                        BinOp::Lt => return Ok(format!("(bas_str_cmp({}, {}) < 0)", l, r)),
+                        BinOp::Gt => return Ok(format!("(bas_str_cmp({}, {}) > 0)", l, r)),
+                        BinOp::Le => return Ok(format!("(bas_str_cmp({}, {}) <= 0)", l, r)),
+                        BinOp::Ge => return Ok(format!("(bas_str_cmp({}, {}) >= 0)", l, r)),
+                        _ => {}
+                    }
+                }
                 match op {
                     BinOp::And => format!("({} && {})", l, r),
                     BinOp::Or => format!("({} || {})", l, r),
@@ -1888,7 +1935,11 @@ impl Codegen {
                     Some(a) => self.emit_expr(a)?,
                     None => "\"panic\"".to_string(),
                 };
-                format!("(fprintf(stderr, \"%s\\n\", {}), abort())", msg)
+                // `bas_panic()` is emitted into the runtime prelude (see
+                // `runtime_prelude`); it is the only failure path reachable
+                // before `main`, so it must not depend on a symbol the target
+                // libc may lack.
+                format!("(bas_panic({}), 0)", msg)
             }
             Expr::Return(v) => match v {
                 Some(e) => format!("return {}", self.emit_expr(e)?),
@@ -2938,6 +2989,23 @@ fn escape_c(c: char) -> String {
 
 const RUNTIME: &str = r#"
 /* ---- bas runtime ---- */
+
+/* Report a runtime failure and stop.
+ *
+ * Deliberately built from `printf` and `exit` only: those two are declared and
+ * defined by every libc bas targets -- glibc, CodeOS's kernel/userspace/lib
+ * (putchar/puts/printf + exit) and Zircon's pkgs/core/base/libc.  The obvious
+ * choices do not survive the cross targets: CodeOS has no `stderr` and no
+ * `fprintf`, and *neither* CodeOS nor Zircon defines `abort`, so
+ * `fprintf(stderr, ...); abort();` failed to compile for CodeOS and would have
+ * failed to link for Zircon.  printf is also the right call for a failed
+ * allocation: the message must not route through the allocator that just failed.
+ */
+static void bas_panic(const char *msg) {
+    printf("bas: %s\n", msg ? msg : "panic");
+    exit(1);
+}
+
 static char *bas_strdup(const char *s) {
     size_t n = strlen(s) + 1;
     char *p = (char *)malloc(n);
@@ -2975,12 +3043,29 @@ static BasVec bas_vec_new(size_t elem) {
     return v;
 }
 
+/* Portable realloc.
+ *
+ * libc's realloc already knows an allocation's current size, but the
+ * freestanding targets do not: CodeOS's malloc is a bump allocator with a
+ * no-op free, so it keeps no per-block size and a bare realloc(p, n) cannot
+ * know how much of `p` to preserve.  Every bas grow site knows its own old
+ * size exactly, so it is passed explicitly and this stays correct on both a
+ * real heap and a bump allocator. */
+static void *bas_realloc(void *p, size_t old_size, size_t new_size) {
+    if (new_size <= old_size) return p;
+    void *np = malloc(new_size);
+    if (!np) return 0;
+    memcpy(np, p, old_size);
+    free(p); /* a real heap reclaims the old block; a bump allocator no-ops */
+    return np;
+}
+
 static void bas_vec_reserve(BasVec *v, size_t want) {
     if (want <= v->cap) return;
     size_t cap = v->cap ? v->cap * 2 : 4;
     while (cap < want) cap *= 2;
-    v->data = realloc(v->data, cap * v->elem);
-    if (!v->data) { fprintf(stderr, "bas: out of memory\n"); abort(); }
+    v->data = bas_realloc(v->data, v->cap * v->elem, cap * v->elem);
+    if (!v->data) { bas_panic("bas: out of memory"); }
     v->cap = cap;
 }
 
@@ -2991,7 +3076,7 @@ static void bas_vec_push(BasVec *v, const void *item) {
 }
 
 static void *bas_vec_get(const BasVec *v, size_t i) {
-    if (i >= v->len) { fprintf(stderr, "bas: vec index %zu out of bounds (len %zu)\n", i, v->len); abort(); }
+    if (i >= v->len) { bas_panic("bas: vec index out of bounds"); }
     return (char *)v->data + i * v->elem;
 }
 
@@ -3033,16 +3118,16 @@ static size_t bas_string_len(const char *s) {
 static void bas_string_push_str(char **self, const char *s) {
     size_t a = strlen(*self);
     size_t b = strlen(s);
-    char *grown = (char *)realloc(*self, a + b + 1);
-    if (!grown) { fprintf(stderr, "bas: out of memory\n"); abort(); }
+    char *grown = (char *)bas_realloc(*self, a + 1, a + b + 1);
+    if (!grown) { bas_panic("bas: out of memory"); }
     memcpy(grown + a, s, b + 1);
     *self = grown;
 }
 
 static void bas_string_push_char(char **self, int c) {
     size_t a = strlen(*self);
-    char *grown = (char *)realloc(*self, a + 2);
-    if (!grown) { fprintf(stderr, "bas: out of memory\n"); abort(); }
+    char *grown = (char *)bas_realloc(*self, a + 1, a + 2);
+    if (!grown) { bas_panic("bas: out of memory"); }
     grown[a] = (char)c;
     grown[a + 1] = '\0';
     *self = grown;
@@ -3062,6 +3147,24 @@ static int bas_str_ends_with(const char *s, const char *suffix) {
 
 static int bas_str_contains(const char *s, const char *needle) {
     return strstr(s, needle) != NULL;
+}
+
+/* Comparison for `&str` / `String`, which both lower to `const char *`.
+ *
+ * A plain C `==` compares addresses, so `got == payload` was false even when
+ * the two strings held identical bytes.  NULL is not a valid `&str`, but an
+ * SDK call returns one on failure (bas cannot express Option<&str>), so NULL
+ * compares less than any real string instead of crashing in strcmp. */
+static int bas_str_eq(const char *a, const char *b) {
+    if (a == b) { return 1; }
+    if (!a || !b) { return 0; }
+    return strcmp(a, b) == 0;
+}
+
+static int bas_str_cmp(const char *a, const char *b) {
+    if (!a) { return b ? -1 : 0; }
+    if (!b) { return 1; }
+    return strcmp(a, b);
 }
 "#;
 
@@ -3255,6 +3358,42 @@ mod tests {
         assert!(c.contains("bas_string_push_str(&(s), \"hi\")"), "{}", c);
         assert!(c.contains("bas_string_push_char(&(s), '!')"), "{}", c);
         assert!(c.contains("strlen(s)"), "{}", c);
+    }
+
+    #[test]
+    fn string_comparison_uses_content() {
+        let src = r#"
+            fn main() {
+                let a = "one";
+                let b = "two";
+                let eq = a == b;
+                let ne = a != b;
+                let lt = a < b;
+            }
+        "#;
+        let c = gen(src);
+        // Both operands lower to `const char *`; emitting the bare C operator
+        // would compare addresses and make every string equality false.
+        assert!(c.contains("bas_str_eq(a, b)"), "{}", c);
+        assert!(c.contains("(!bas_str_eq(a, b))"), "{}", c);
+        assert!(c.contains("(bas_str_cmp(a, b) < 0)"), "{}", c);
+        assert!(!c.contains("bool eq = (a == b)"), "{}", c);
+    }
+
+    #[test]
+    fn integer_comparison_stays_a_c_operator() {
+        let src = r#"
+            fn main() {
+                let a = 1;
+                let b = 2;
+                let eq = a == b;
+                let lt = a < b;
+            }
+        "#;
+        let c = gen(src);
+        assert!(c.contains("(a == b)"), "{}", c);
+        assert!(c.contains("(a < b)"), "{}", c);
+        assert!(!c.contains("bas_str_eq(a, b)"), "{}", c);
     }
 
     #[test]

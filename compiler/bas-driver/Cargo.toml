@@ -10,3 +10,4 @@ bas-frontend = { path = "../bas-frontend" }
 bas-borrowck = { path = "../bas-borrowck" }
 bas-codegen = { path = "../bas-codegen" }
 bas-typeck = { path = "../bas-typeck" }
+bas-target = { path = "../bas-target" }

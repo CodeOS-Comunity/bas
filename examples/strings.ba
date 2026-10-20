@@ -22,6 +22,9 @@ fn main() {
 
     let copy = msg.clone();
     println!("copy = {}", copy);
+    println!("same text = {}", msg == "Hello, bas!");
+    println!("different text = {}", msg != "Hello, bas");
+    println!("ordering = {}", msg < "Zzz");
 
     let mut numbers: Vec<i32> = Vec::new();
     numbers.push(10);

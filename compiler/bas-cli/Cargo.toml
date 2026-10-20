@@ -11,3 +11,4 @@ path = "src/main.rs"
 
 [dependencies]
 bas-driver = { path = "../bas-driver" }
+bas-target = { path = "../bas-target" }

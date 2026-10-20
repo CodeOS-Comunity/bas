@@ -14,6 +14,7 @@ name = "bas-cli"
 version = "0.1.0"
 dependencies = [
  "bas-driver",
+ "bas-target",
 ]
 
 [[package]]
@@ -34,6 +35,7 @@ dependencies = [
  "bas-borrowck",
  "bas-codegen",
  "bas-frontend",
+ "bas-target",
  "bas-typeck",
 ]
 
